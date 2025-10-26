@@ -7,7 +7,7 @@ After=network.target longmynd.service
 
 [Service]
 Environment=SERVICE_MODE=1
-ExecStart=/opt/build/longmynd-utils/repater.sh
+ExecStart=/opt/build/longmynd-utils/repeater.sh
 User=f4exb
 Group=f4exb
 Restart=on-failure
