@@ -16,8 +16,8 @@ if [ -z $SERVICE_MODE ]; then
     trylock_next=10               # number of 1 second tries to lock after initial lock
 else
     echo "Starting Longmynd to PlutoSDR repeater script in service mode"
-    # configuration is loaded from file /etc/systemd/system/longmynd-repeater.service
-    source /etc/systemd/system/longmynd-repeater.service
+    # configuration is loaded from file /etc/systemd/system/longmynd-repeater.conf
+    source /etc/systemd/system/longmynd-repeater.conf
 fi
 
 # MQTT topics
