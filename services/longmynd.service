@@ -1,0 +1,13 @@
+[Install]
+WantedBy=multi-user.target
+
+[Unit]
+Description=Minitiouner control with F5OEO longmynd
+After=network.target
+
+[Service]
+Environment='ARGS=-M 192.168.0.37 1883 -i 192.168.0.37 1234 -r -1 741500 1500'
+ExecStart=/opt/build/longmynd/longmynd $ARGS
+User=f4exb
+Group=f4exb
+Restart=on-failure
