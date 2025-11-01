@@ -70,6 +70,7 @@ waitlock()
         sr=$(mosquittoSub -t $dt_longmynd/symbolrate -C 1)
         frequency=$(mosquittoSub -t $dt_longmynd/carrier_frequency -C 1)
         station=$(mosquittoSub -t $dt_longmynd/service_name -C 1)
+        station=$(echo $station | sed 's/ /_/g')
         modulation=$(mosquittoSub -t $dt_longmynd/modulation -C 1)
 
         if [ -z "$station" ]; then
