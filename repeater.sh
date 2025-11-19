@@ -188,6 +188,15 @@ exit_script() {
     kill -- -$$ # Sends SIGTERM to child/sub processes
 }
 
+wait_mqtt()
+{
+    mosquittoSub -t $dt_longmynd/modulation -C 1
+    while [ $? -ne 0 ]
+    do
+        mosquittoSub -t $dt_pluto/modulation -C 1
+    done
+}
+
 init()
 {
     $(mosquittoPub -t $cmd_root/tx/mute -m 1)
@@ -206,6 +215,7 @@ fecmode=follow
 FecMode &
 inputfrequency &
 
+wait_mqtt
 init
 while :
 do
