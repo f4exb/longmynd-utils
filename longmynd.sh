@@ -1,5 +1,5 @@
 #!/bin/sh
-# Longmyund configuration script for PlutoSDR
+# Longmynd configuration script for PlutoSDR
 # sudo apt install mosquitto-clients
 
 # configuration
