@@ -9,6 +9,7 @@ if [ -z $SERVICE_MODE ]; then
     host="192.168.0.37"           # Pluto address
     input_frequency="741500"      # Longmynd is in kHz
     output_frequency="2372000000" # Pluto is in Hz
+    power_db="-10"                # Pluto output power in dB vs max power
     ts_ip=${host}                 # Longmynd transport stream target IP address
     ts_port="1234"                # Longmynd transport stream target port
     symbol_rates="1500 125 250 333 500 1000" # symbol rates to scan in kSps
@@ -200,7 +201,7 @@ wait_mqtt()
 init()
 {
     $(mosquittoPub -t $cmd_root/tx/mute -m 1)
-    $(mosquittoPub -t $cmd_root/tx/gain -m -10)
+    $(mosquittoPub -t $cmd_root/tx/gain -m ${power_db})
     $(mosquittoPub -t $cmd_root/tx/frequency -m ${output_frequency})
     $(mosquittoPub -t $cmd_root/tx/stream/mode -m dvbs2-ts)
     $(mosquittoPub -t $cmd_root/tx/dvbs2/tssourceaddress -m ${ts_ip}:${ts_port})
