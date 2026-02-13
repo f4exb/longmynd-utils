@@ -47,7 +47,10 @@ ts_port="1234"                # Longmynd transport stream target port
 symbol_rates="1500 125 250 333 500 1000" # symbol rates to scan in kSps
 trylock_init=2                # number of 1 second tries to lock to a SR initially
 trylock_next=10               # number of 1 second tries to lock after initial lock
+gpio_pin="17"                 # GPIO pin number on RPi to use for lock indication (BCM numbering)
 </pre>
+
+`gpio_pin` is optional and works in the context of the script running on a Raspberry Pi. It can be used to control the PTT.
 
 In particular the `symbol_rates` variable sets the symbol rate values scanned in the given order
 

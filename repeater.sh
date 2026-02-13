@@ -15,6 +15,7 @@ if [ -z $SERVICE_MODE ]; then
     symbol_rates="1500 125 250 333 500 1000" # symbol rates to scan in kSps
     trylock_init=2                # number of 1 second tries to lock to a SR initially
     trylock_next=10               # number of 1 second tries to lock after initial lock
+    gpio_pin="17"                 # GPIO pin number for Tx indicator (0 to disable)
 else
     echo "Starting Longmynd to PlutoSDR repeater script in service mode"
     # configuration is loaded from file /etc/systemd/system/longmynd-repeater.conf
@@ -28,6 +29,16 @@ cmd_root="cmd/pluto/$key"
 dt_relay="dt/pluto/$key/relay"
 cmd_relay="cmd/pluto/$key/relay"
 
+# Initialize GPIO if enabled
+if [ -n "$gpio_pin" ] && [ "$gpio_pin" -gt 0 ]; then
+    if [ ! -d "/sys/class/gpio/gpio${gpio_pin}" ]; then
+        echo "$gpio_pin" > /sys/class/gpio/export
+        sleep 0.1
+    fi
+    echo "out" > /sys/class/gpio/gpio${gpio_pin}/direction
+    echo "0" > /sys/class/gpio/gpio${gpio_pin}/value
+    echo "GPIO pin ${gpio_pin} initialized"
+fi
 
 mosquittoPub() {
   mosquitto_pub -h ${host} ${@}
@@ -105,6 +116,10 @@ waitlock()
         echo_over "locked $station with mer $mer"
 
         $(mosquittoPub -t $cmd_root/tx/mute -m 0)
+        # Set GPIO pin high when Tx is unmuted
+        if [ -n "$gpio_pin" ] && [ "$gpio_pin" -gt 0 ]; then
+            echo "1" > /sys/class/gpio/gpio${gpio_pin}/value
+        fi
         $(mosquittoPub -t $cmd_root/tx/dvbs2/sdt -m $station"-via-")
 
         if [ "$fecmode" == "follow" ] && [ "$fec" != "none" ]
@@ -119,6 +134,10 @@ waitlock()
     echo_nservice
     echo "unlocked"
     $(mosquittoPub -t $cmd_root/tx/mute -m 1)
+    # Set GPIO pin low when Tx is muted
+    if [ -n "$gpio_pin" ] && [ "$gpio_pin" -gt 0 ]; then
+        echo "0" > /sys/class/gpio/gpio${gpio_pin}/value
+    fi
 }
 
 trylock()
