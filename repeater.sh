@@ -15,7 +15,12 @@ if [ -z $SERVICE_MODE ]; then
     symbol_rates="1500 125 250 333 500 1000" # symbol rates to scan in kSps
     trylock_init=2                # number of 1 second tries to lock to a SR initially
     trylock_next=10               # number of 1 second tries to lock after initial lock
-    gpio_pin="17"                 # GPIO pin number for Tx indicator (0 to disable)
+    gpio_pin1="17"                # first GPIO pin number for Tx indicator (0 to disable)
+    gpio_delay_on1="0.1"          # first GPIO on delay in seconds (e.g., 0.1 = 100ms)
+    gpio_delay_off1="0.1"         # first GPIO off delay in seconds (e.g., 0.1 = 100ms)
+    gpio_pin2="0"                 # second GPIO pin number (0 to disable)
+    gpio_delay_on2="0.1"          # second GPIO on delay in seconds
+    gpio_delay_off2="0.1"         # second GPIO off delay in seconds
 else
     echo "Starting Longmynd to PlutoSDR repeater script in service mode"
     # configuration is loaded from file /etc/systemd/system/longmynd-repeater.conf
@@ -30,14 +35,25 @@ dt_relay="dt/pluto/$key/relay"
 cmd_relay="cmd/pluto/$key/relay"
 
 # Initialize GPIO if enabled
-if [ -n "$gpio_pin" ] && [ "$gpio_pin" -gt 0 ]; then
-    if [ ! -d "/sys/class/gpio/gpio${gpio_pin}" ]; then
-        echo "$gpio_pin" > /sys/class/gpio/export
+if [ -n "$gpio_pin1" ] && [ "$gpio_pin1" -gt 0 ]; then
+    if [ ! -d "/sys/class/gpio/gpio${gpio_pin1}" ]; then
+        echo "$gpio_pin1" > /sys/class/gpio/export
         sleep 0.1
     fi
-    echo "out" > /sys/class/gpio/gpio${gpio_pin}/direction
-    echo "0" > /sys/class/gpio/gpio${gpio_pin}/value
-    echo "GPIO pin ${gpio_pin} initialized"
+    echo "out" > /sys/class/gpio/gpio${gpio_pin1}/direction
+    echo "0" > /sys/class/gpio/gpio${gpio_pin1}/value
+    echo "GPIO pin ${gpio_pin1} initialized"
+fi
+
+# Initialize second GPIO if enabled
+if [ -n "$gpio_pin2" ] && [ "$gpio_pin2" -gt 0 ]; then
+    if [ ! -d "/sys/class/gpio/gpio${gpio_pin2}" ]; then
+        echo "$gpio_pin2" > /sys/class/gpio/export
+        sleep 0.1
+    fi
+    echo "out" > /sys/class/gpio/gpio${gpio_pin2}/direction
+    echo "0" > /sys/class/gpio/gpio${gpio_pin2}/value
+    echo "GPIO pin ${gpio_pin2} initialized"
 fi
 
 mosquittoPub() {
@@ -116,9 +132,13 @@ waitlock()
         echo_over "locked $station with mer $mer"
 
         $(mosquittoPub -t $cmd_root/tx/mute -m 0)
-        # Set GPIO pin high when Tx is unmuted
-        if [ -n "$gpio_pin" ] && [ "$gpio_pin" -gt 0 ]; then
-            echo "1" > /sys/class/gpio/gpio${gpio_pin}/value
+        # Set first GPIO pin high when Tx is unmuted (asynchronous with delay)
+        if [ -n "$gpio_pin1" ] && [ "$gpio_pin1" -gt 0 ]; then
+            (sleep "$gpio_delay_on1"; echo "1" > /sys/class/gpio/gpio${gpio_pin1}/value) &
+        fi
+        # Set second GPIO pin high when Tx is unmuted (asynchronous with delay)
+        if [ -n "$gpio_pin2" ] && [ "$gpio_pin2" -gt 0 ]; then
+            (sleep "$gpio_delay_on2"; echo "1" > /sys/class/gpio/gpio${gpio_pin2}/value) &
         fi
         $(mosquittoPub -t $cmd_root/tx/dvbs2/sdt -m $station"-via-")
 
@@ -134,9 +154,13 @@ waitlock()
     echo_nservice
     echo "unlocked"
     $(mosquittoPub -t $cmd_root/tx/mute -m 1)
-    # Set GPIO pin low when Tx is muted
-    if [ -n "$gpio_pin" ] && [ "$gpio_pin" -gt 0 ]; then
-        echo "0" > /sys/class/gpio/gpio${gpio_pin}/value
+    # Set first GPIO pin low when Tx is muted (asynchronous with delay)
+    if [ -n "$gpio_pin1" ] && [ "$gpio_pin1" -gt 0 ]; then
+        (sleep "$gpio_delay_off1"; echo "0" > /sys/class/gpio/gpio${gpio_pin1}/value) &
+    fi
+    # Set second GPIO pin low when Tx is muted (asynchronous with delay)
+    if [ -n "$gpio_pin2" ] && [ "$gpio_pin2" -gt 0 ]; then
+        (sleep "$gpio_delay_off2"; echo "0" > /sys/class/gpio/gpio${gpio_pin2}/value) &
     fi
 }
 

@@ -47,10 +47,13 @@ ts_port="1234"                # Longmynd transport stream target port
 symbol_rates="1500 125 250 333 500 1000" # symbol rates to scan in kSps
 trylock_init=2                # number of 1 second tries to lock to a SR initially
 trylock_next=10               # number of 1 second tries to lock after initial lock
-gpio_pin="17"                 # GPIO pin number on RPi to use for lock indication (BCM numbering)
+gpio_pin1="17"                # first GPIO pin number on RPi to use for lock indication (BCM numbering)
+gpio_delay_on1="0.1"          # first GPIO on delay in seconds (e.g., 0.1 = 100ms)
+gpio_delay_off1="0.1"         # first GPIO off delay in seconds (e.g., 0.1 = 100ms)
+gpio_pin2="0"                 # Second GPIO pin number (0 to disable)
+gpio_delay_on2="0.1"          # Second GPIO on delay in seconds
+gpio_delay_off2="0.1"         # Second GPIO off delay in seconds
 </pre>
-
-`gpio_pin` is optional and works in the context of the script running on a Raspberry Pi. It can be used to control the PTT.
 
 In particular the `symbol_rates` variable sets the symbol rate values scanned in the given order
 
@@ -76,3 +79,11 @@ To check the logs (example with `longmynd` service):
 journalctl -xu longmynd   # Full log
 journalctl -u longmynd -f # Follow-up mode
 </pre>
+
+<h3>GPIO control</h3>
+
+`gpio_pin1` an `gpio_pin2` are optional and work in the context of the script running on a Raspberry Pi. They act as two independent PTT controls with delays.
+
+A GPIO number "0" disables the GPIO control.
+
+When an active GPIO is specified the corresponding on and off delays must be specified. A delay of 0 means immediate action.
