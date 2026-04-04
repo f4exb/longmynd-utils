@@ -53,6 +53,7 @@ gpio_delay_off1="0.1"         # first GPIO off delay in seconds (e.g., 0.1 = 100
 gpio_pin2="0"                 # Second GPIO pin number (0 to disable)
 gpio_delay_on2="0.1"          # Second GPIO on delay in seconds
 gpio_delay_off2="0.1"         # Second GPIO off delay in seconds
+gpio_chip="gpiochip0"         # GPIO chip device name (see: gpioinfo)
 </pre>
 
 In particular the `symbol_rates` variable sets the symbol rate values scanned in the given order
@@ -82,7 +83,30 @@ journalctl -u longmynd -f # Follow-up mode
 
 <h3>GPIO control</h3>
 
-`gpio_pin1` an `gpio_pin2` are optional and work in the context of the script running on a Raspberry Pi. They act as two independent PTT controls with delays.
+This works in the context of the script running on a Raspberry-Pi
+
+You have to install the gpiod package first: `sudo apt install gpiod`
+
+`gpio_chip` is the chip parameter returned by the command `sudo gpioinfo` for which the "GPIO" lines are available. For example:
+
+```
+sudo gpioinfo
+gpiochip0 - 58 lines:
+        line   0:     "ID_SDA"       unused   input  active-high
+        line   1:     "ID_SCL"       unused   input  active-high
+        line   2:      "GPIO2"       unused   input  active-high
+        line   3:      "GPIO3"       unused   input  active-high
+        line   4:      "GPIO4"       unused   input  active-high
+        line   5:      "GPIO5"       unused   input  active-high
+        line   6:      "GPIO6"       unused   input  active-high
+        line   7:      "GPIO7"   "spi0 CS1"  output   active-low [used]
+        line   8:      "GPIO8"   "spi0 CS0"  output   active-low [used]
+        line   9:      "GPIO9"       unused   input  active-high
+        line  10:     "GPIO10"       unused   input  active-high
+...
+```
+
+`gpio_pin1` and `gpio_pin2` are optional. They act as two independent PTT controls with delays.
 
 A GPIO number "0" disables the GPIO control.
 

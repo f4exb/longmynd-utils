@@ -21,6 +21,7 @@ if [ -z $SERVICE_MODE ]; then
     gpio_pin2="0"                 # second GPIO pin number (0 to disable)
     gpio_delay_on2="0.1"          # second GPIO on delay in seconds
     gpio_delay_off2="0.1"         # second GPIO off delay in seconds
+    gpio_chip="gpiochip0"         # GPIO chip device name (see gpioinfo)
 else
     echo "Starting Longmynd to PlutoSDR repeater script in service mode"
     # configuration is loaded from file /etc/systemd/system/longmynd-repeater.conf
@@ -36,32 +37,20 @@ cmd_relay="cmd/pluto/$key/relay"
 
 # Initialize GPIO if enabled
 if [ -n "$gpio_pin1" ] && [ "$gpio_pin1" -gt 0 ]; then
-    if [ ! -d "/sys/class/gpio/gpio${gpio_pin1}" ]; then
-        echo "$gpio_pin1" > /sys/class/gpio/export 2>/dev/null
-        sleep 0.1
-    fi
-    if [ -d "/sys/class/gpio/gpio${gpio_pin1}" ]; then
-        echo "out" > /sys/class/gpio/gpio${gpio_pin1}/direction
-        echo "0" > /sys/class/gpio/gpio${gpio_pin1}/value
-        echo "GPIO pin ${gpio_pin1} initialized"
+    if gpioset ${gpio_chip} ${gpio_pin1}=0 2>/dev/null; then
+        echo "GPIO pin ${gpio_pin1} on ${gpio_chip} initialized"
     else
-        echo "Warning: GPIO pin ${gpio_pin1} could not be exported, disabling"
+        echo "Warning: GPIO pin ${gpio_pin1} on ${gpio_chip} not accessible, disabling"
         gpio_pin1="0"
     fi
 fi
 
 # Initialize second GPIO if enabled
 if [ -n "$gpio_pin2" ] && [ "$gpio_pin2" -gt 0 ]; then
-    if [ ! -d "/sys/class/gpio/gpio${gpio_pin2}" ]; then
-        echo "$gpio_pin2" > /sys/class/gpio/export 2>/dev/null
-        sleep 0.1
-    fi
-    if [ -d "/sys/class/gpio/gpio${gpio_pin2}" ]; then
-        echo "out" > /sys/class/gpio/gpio${gpio_pin2}/direction
-        echo "0" > /sys/class/gpio/gpio${gpio_pin2}/value
-        echo "GPIO pin ${gpio_pin2} initialized"
+    if gpioset ${gpio_chip} ${gpio_pin2}=0 2>/dev/null; then
+        echo "GPIO pin ${gpio_pin2} on ${gpio_chip} initialized"
     else
-        echo "Warning: GPIO pin ${gpio_pin2} could not be exported, disabling"
+        echo "Warning: GPIO pin ${gpio_pin2} on ${gpio_chip} not accessible, disabling"
         gpio_pin2="0"
     fi
 fi
@@ -144,11 +133,11 @@ waitlock()
         $(mosquittoPub -t $cmd_root/tx/mute -m 0)
         # Set first GPIO pin high when Tx is unmuted (asynchronous with delay)
         if [ -n "$gpio_pin1" ] && [ "$gpio_pin1" -gt 0 ]; then
-            (sleep "$gpio_delay_on1"; echo "1" > /sys/class/gpio/gpio${gpio_pin1}/value) &
+            (sleep "$gpio_delay_on1"; gpioset ${gpio_chip} ${gpio_pin1}=1) &
         fi
         # Set second GPIO pin high when Tx is unmuted (asynchronous with delay)
         if [ -n "$gpio_pin2" ] && [ "$gpio_pin2" -gt 0 ]; then
-            (sleep "$gpio_delay_on2"; echo "1" > /sys/class/gpio/gpio${gpio_pin2}/value) &
+            (sleep "$gpio_delay_on2"; gpioset ${gpio_chip} ${gpio_pin2}=1) &
         fi
         $(mosquittoPub -t $cmd_root/tx/dvbs2/sdt -m $station"-via-")
 
@@ -166,11 +155,11 @@ waitlock()
     $(mosquittoPub -t $cmd_root/tx/mute -m 1)
     # Set first GPIO pin low when Tx is muted (asynchronous with delay)
     if [ -n "$gpio_pin1" ] && [ "$gpio_pin1" -gt 0 ]; then
-        (sleep "$gpio_delay_off1"; echo "0" > /sys/class/gpio/gpio${gpio_pin1}/value) &
+        (sleep "$gpio_delay_off1"; gpioset ${gpio_chip} ${gpio_pin1}=0) &
     fi
     # Set second GPIO pin low when Tx is muted (asynchronous with delay)
     if [ -n "$gpio_pin2" ] && [ "$gpio_pin2" -gt 0 ]; then
-        (sleep "$gpio_delay_off2"; echo "0" > /sys/class/gpio/gpio${gpio_pin2}/value) &
+        (sleep "$gpio_delay_off2"; gpioset ${gpio_chip} ${gpio_pin2}=0) &
     fi
 }
 
