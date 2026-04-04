@@ -37,23 +37,33 @@ cmd_relay="cmd/pluto/$key/relay"
 # Initialize GPIO if enabled
 if [ -n "$gpio_pin1" ] && [ "$gpio_pin1" -gt 0 ]; then
     if [ ! -d "/sys/class/gpio/gpio${gpio_pin1}" ]; then
-        echo "$gpio_pin1" > /sys/class/gpio/export
+        echo "$gpio_pin1" > /sys/class/gpio/export 2>/dev/null
         sleep 0.1
     fi
-    echo "out" > /sys/class/gpio/gpio${gpio_pin1}/direction
-    echo "0" > /sys/class/gpio/gpio${gpio_pin1}/value
-    echo "GPIO pin ${gpio_pin1} initialized"
+    if [ -d "/sys/class/gpio/gpio${gpio_pin1}" ]; then
+        echo "out" > /sys/class/gpio/gpio${gpio_pin1}/direction
+        echo "0" > /sys/class/gpio/gpio${gpio_pin1}/value
+        echo "GPIO pin ${gpio_pin1} initialized"
+    else
+        echo "Warning: GPIO pin ${gpio_pin1} could not be exported, disabling"
+        gpio_pin1="0"
+    fi
 fi
 
 # Initialize second GPIO if enabled
 if [ -n "$gpio_pin2" ] && [ "$gpio_pin2" -gt 0 ]; then
     if [ ! -d "/sys/class/gpio/gpio${gpio_pin2}" ]; then
-        echo "$gpio_pin2" > /sys/class/gpio/export
+        echo "$gpio_pin2" > /sys/class/gpio/export 2>/dev/null
         sleep 0.1
     fi
-    echo "out" > /sys/class/gpio/gpio${gpio_pin2}/direction
-    echo "0" > /sys/class/gpio/gpio${gpio_pin2}/value
-    echo "GPIO pin ${gpio_pin2} initialized"
+    if [ -d "/sys/class/gpio/gpio${gpio_pin2}" ]; then
+        echo "out" > /sys/class/gpio/gpio${gpio_pin2}/direction
+        echo "0" > /sys/class/gpio/gpio${gpio_pin2}/value
+        echo "GPIO pin ${gpio_pin2} initialized"
+    else
+        echo "Warning: GPIO pin ${gpio_pin2} could not be exported, disabling"
+        gpio_pin2="0"
+    fi
 fi
 
 mosquittoPub() {
